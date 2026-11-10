@@ -1,0 +1,442 @@
+app:
+  description: |-
+    AI 人生模拟器 - 行动驱动的人生沙盒
+    
+    基于 PowerContext + seekdb + Dify 构建。
+    每一次行动，都塑造一段不同的人生。10 项能力从 F 到 S 阶，18 种行动自由组合，AI 记住你的每一步经历。
+  icon: "\U0001F3AE"
+  icon_background: "#E4FBCC"
+  mode: advanced-chat
+  name: AI人生模拟器
+  use_icon_as_answer_icon: false
+kind: app
+version: "0.1.5"
+workflow:
+  conversation_variables: []
+  environment_variables:
+    - name: pc_server_url
+      value_type: string
+      value: "http://127.0.0.1:8000"
+    - name: pc_scope_id
+      value_type: string
+      value: ""
+  features:
+    file_upload:
+      allowed_file_extensions: []
+      allowed_file_types: []
+      allowed_file_upload_methods:
+        - local_file
+        - remote_url
+      enabled: false
+      number_limits: 3
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+          - local_file
+          - remote_url
+    opening_statement: |-
+      欢迎来到 AI 人生模拟器！
+      
+      你将开始一段全新的人生旅程。请告诉我：
+      1. 你的名字
+      2. 性别（男/女）
+      3. 出身背景（如：普通工薪家庭、富裕商人家庭等）
+      
+      或者回复"随机"让我为你生成一个随机角色。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "随机生成一个角色"
+      - "我叫小明，男，普通家庭"
+      - "我要开始新人生"
+    suggested_questions_after_answer:
+      enabled: true
+      questions:
+        - "我选择锻炼"
+        - "我选择学习"
+        - "我选择社交"
+        - "存档当前人生"
+    text_to_speech:
+      enabled: false
+      language: ""
+      voice: ""
+  graph:
+    edges:
+      - data:
+          isInIteration: false
+          sourceType: start
+          targetHandle: target
+        id: start-to-lLM-context
+        source: start-node
+        sourceHandle: source
+        target: llm-context-prep
+        targetHandle: target
+        type: custom
+      - data:
+          isInIteration: false
+          sourceType: llm
+          targetHandle: target
+        id: llm-context-to-lLM-narrative
+        source: llm-context-prep
+        sourceHandle: source
+        target: llm-narrative
+        targetHandle: target
+        type: custom
+      - data:
+          isInIteration: false
+          sourceType: llm
+          targetHandle: target
+        id: llm-narrative-to-code-parse
+        source: llm-narrative
+        sourceHandle: source
+        target: code-parse-result
+        targetHandle: target
+        type: custom
+      - data:
+          isInIteration: false
+          sourceType: code
+          targetHandle: target
+        id: code-parse-to-code-remember
+        source: code-parse-result
+        sourceHandle: source
+        target: code-store-memory
+        targetHandle: target
+        type: custom
+      - data:
+          isInIteration: false
+          sourceType: code
+          targetHandle: target
+        id: code-remember-to-answer
+        source: code-store-memory
+        sourceHandle: source
+        target: answer-node
+        targetHandle: target
+        type: custom
+    nodes:
+      # ===== 开始节点 =====
+      - data:
+          desc: "用户输入 - 行动选择或角色创建"
+          selected: false
+          title: 开始
+          type: start
+          variables: []
+        height: 54
+        id: start-node
+        position:
+          x: 80
+          y: 282
+        positionAbsolute:
+          x: 80
+          y: 282
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+
+      # ===== LLM 节点 1: 准备上下文并生成叙事 =====
+      - data:
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "调用 LLM 生成行动叙事，包含 PowerContext 召回的记忆"
+          model:
+            completion_params:
+              temperature: 0.85
+              top_p: 0.95
+              max_tokens: 2000
+            mode: chat
+            name: deepseek-chat
+            provider: deepseek
+          prompt_template:
+            - id: system
+              role: system
+              text: |-
+                你是一位人生模拟器的叙事引擎。玩家选择了一个行动，你需要生成这个行动带来的结果和故事。
+
+                ## 核心规则
+                1. 用第二人称"你"叙述，让玩家身临其境
+                2. 回复 60-150 字，简洁生动有画面感
+                3. 根据人生阶段调整叙事语气：
+                   - 童年(0-12岁)：温馨、好奇、天真
+                   - 青少年(13-17岁)：叛逆、探索、冲动
+                   - 青年(18-29岁)：奋斗、迷茫、激情
+                   - 壮年(30-49岁)：责任、沉淀、抉择
+                   - 中年(50-64岁)：反思、传承、收获
+                   - 老年(65岁+)：智慧、回忆、释然
+                4. 如果提供了历史记忆，偶尔呼应过去的经历
+                5. 如果提供了人生教训，在合适场景体现因果
+                6. 结果要合理——高难度行动不一定每次都成功
+                7. 偶尔触发特殊事件（遇到贵人、意外机遇、突发挑战）
+
+                ## 角色能力系统
+                角色有 10 项能力（0-100），分为 F~S 六个等阶：
+                - 体能：力量、敏捷、耐力
+                - 智力：逻辑、创造力、知识
+                - 社交：魅力、共情
+                - 生活：财力、事业
+
+                等阶划分：F(0-19) / D(20-39) / C(40-59) / B(60-74) / A(75-89) / S(90-100)
+
+                角色还有 3 项生命状态：
+                - 健康 (0-100)：归零则人生结束
+                - 幸福 (0-100)：心理状态
+                - 精力 (0-100)：行动消耗精力，不足时只能休息
+
+                ## 输出格式
+                每次回复请严格按以下 JSON 格式输出：
+                ```json
+                {
+                  "narrative": "叙事文本（60-150字）",
+                  "bonus_abilities": {"ability_key": 额外变化量},
+                  "bonus_vitals": {"health/happiness": 额外变化量},
+                  "new_skill": "获得的技能名（可选，null）",
+                  "new_relationship": {"name": "人名", "type": "关系"},
+                  "life_lesson": "人生教训（可选，null）",
+                  "special_event": "特殊事件描述（可选，null）"
+                }
+                ```
+
+                ## 注意事项
+                - bonus_abilities 和 bonus_vitals 是在行动基础效果之上的额外变化
+                - 范围 -3 到 +3，大多数时候为空 {} 或 null
+                - 只在叙事中有特别收获/损失时才填写
+            - id: user
+              role: user
+              text: |-
+                ## 当前状态
+                玩家输入: {{#sys.query#}}
+
+                ## 角色信息
+                {{#sys.files#}}
+
+                ## 历史记忆（由 PowerContext 召回）
+                {{#context#}}
+
+                请根据玩家输入的行动，生成叙事结果。
+          selected: false
+          title: 生成叙事
+          type: llm
+          variables: []
+          vision:
+            configs:
+              detail: high
+            enabled: false
+        height: 98
+        id: llm-narrative
+        position:
+          x: 680
+          y: 282
+        positionAbsolute:
+          x: 680
+          y: 282
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+
+      # ===== HTTP 节点: 调用 PowerContext 准备上下文 =====
+      - data:
+          desc: "调用 PowerContext API 召回相关记忆"
+          authorization:
+            type: no-auth
+          body:
+            data: |-
+              {
+                "scope_id": "{{#env.pc_scope_id#}}",
+                "query": "{{#sys.query#}}",
+                "max_bytes": 4000,
+                "assembly": {
+                  "format": "markdown",
+                  "sections": [
+                    {"family": "memory", "limit": 6},
+                    {"family": "experience", "limit": 2}
+                  ]
+                }
+              }
+            type: json
+          headers: "Content-Type: application/json"
+          method: post
+          params: ""
+          selected: false
+          timeout:
+            max_connect_timeout: 60
+            max_read_timeout: 60
+            max_write_timeout: 60
+          title: 召回记忆
+          type: http-request
+          url: "{{#env.pc_server_url#}}/v1/context/prepare"
+          variables: []
+        height: 146
+        id: llm-context-prep
+        position:
+          x: 380
+          y: 282
+        positionAbsolute:
+          x: 380
+          y: 282
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+
+      # ===== 代码节点: 解析 LLM 输出 =====
+      - data:
+          code: |-
+            import json
+            import re
+
+            def main(llm_output: str) -> dict:
+                # Extract JSON from markdown code block if present
+                json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', llm_output, re.DOTALL)
+                if json_match:
+                    json_str = json_match.group(1)
+                else:
+                    # Try to find JSON directly
+                    json_match = re.search(r'\{.*\}', llm_output, re.DOTALL)
+                    json_str = json_match.group(0) if json_match else llm_output
+
+                try:
+                    result = json.loads(json_str)
+                except json.JSONDecodeError:
+                    result = {
+                        "narrative": llm_output,
+                        "bonus_abilities": {},
+                        "bonus_vitals": {},
+                        "new_skill": None,
+                        "new_relationship": None,
+                        "life_lesson": None,
+                        "special_event": None,
+                    }
+
+                # Ensure all fields exist
+                result.setdefault("narrative", "")
+                result.setdefault("bonus_abilities", {})
+                result.setdefault("bonus_vitals", {})
+                result.setdefault("new_skill", None)
+                result.setdefault("new_relationship", None)
+                result.setdefault("life_lesson", None)
+                result.setdefault("special_event", None)
+
+                return {
+                    "narrative": result["narrative"],
+                    "bonus_abilities": json.dumps(result["bonus_abilities"], ensure_ascii=False),
+                    "bonus_vitals": json.dumps(result["bonus_vitals"], ensure_ascii=False),
+                    "new_skill": result.get("new_skill") or "",
+                    "life_lesson": result.get("life_lesson") or "",
+                    "special_event": result.get("special_event") or "",
+                    "memory_text": f"[行动] {result['narrative'][:200]}",
+                }
+          code_language: python3
+          desc: "解析 LLM 的 JSON 输出，提取叙事和额外效果"
+          outputs:
+            narrative:
+              children: null
+              type: string
+            bonus_abilities:
+              children: null
+              type: string
+            bonus_vitals:
+              children: null
+              type: string
+            new_skill:
+              children: null
+              type: string
+            life_lesson:
+              children: null
+              type: string
+            special_event:
+              children: null
+              type: string
+            memory_text:
+              children: null
+              type: string
+          selected: false
+          title: 解析结果
+          type: code
+          variables:
+            - value_selector:
+                - llm-narrative
+                - text
+              variable: llm_output
+        height: 54
+        id: code-parse-result
+        position:
+          x: 980
+          y: 282
+        positionAbsolute:
+          x: 980
+          y: 282
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+
+      # ===== HTTP 节点: 存储记忆 =====
+      - data:
+          desc: "将本次行动的记忆存储到 PowerContext"
+          authorization:
+            type: no-auth
+          body:
+            data: |-
+              {
+                "scope_id": "{{#env.pc_scope_id#}}",
+                "kind": "life",
+                "text": "{{#code-parse-result.memory_text#}}"
+              }
+            type: json
+          headers: "Content-Type: application/json"
+          method: post
+          params: ""
+          selected: false
+          timeout:
+            max_connect_timeout: 30
+            max_read_timeout: 30
+            max_write_timeout: 30
+          title: 存储记忆
+          type: http-request
+          url: "{{#env.pc_server_url#}}/v1/memory/remember"
+          variables: []
+        height: 146
+        id: code-store-memory
+        position:
+          x: 1280
+          y: 282
+        positionAbsolute:
+          x: 1280
+          y: 282
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+
+      # ===== 直接回复节点 =====
+      - data:
+          answer: "{{#code-parse-result.narrative#}}"
+          desc: "输出叙事文本给玩家"
+          selected: false
+          title: 回复
+          type: answer
+          variables: []
+        height: 107
+        id: answer-node
+        position:
+          x: 1580
+          y: 282
+        positionAbsolute:
+          x: 1580
+          y: 282
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244

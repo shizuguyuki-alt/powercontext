@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 人生模拟器</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Start Screen -->
+        <div id="start-screen" class="screen active">
+            <div class="start-container">
+                <h1 class="title">AI 人生模拟器</h1>
+                <p class="subtitle">行动决定命运，数值记录成长</p>
+                <div class="start-form">
+                    <div class="form-group">
+                        <label>姓名</label>
+                        <input type="text" id="char-name" placeholder="留空随机生成">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>性别</label>
+                            <select id="char-gender">
+                                <option value="随机">随机</option>
+                                <option value="男">男</option>
+                                <option value="女">女</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>出身</label>
+                            <select id="char-bg">
+                                <option value="随机">随机</option>
+                                <option value="普通工薪家庭">工薪家庭</option>
+                                <option value="富裕商人家庭">富裕家庭</option>
+                                <option value="书香门第">书香门第</option>
+                                <option value="农村家庭">农村家庭</option>
+                                <option value="艺术家庭">艺术家庭</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button id="btn-start" class="btn-primary" onclick="startGame()">开始新人生</button>
+                </div>
+                <div class="status-bar">
+                    <span id="pc-status" class="status-dot offline"></span>
+                    <span id="pc-status-text">检测中...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen">
+            <div class="game-layout">
+                <!-- Left: Character Panel -->
+                <div class="panel panel-left">
+                    <div class="panel-header">
+                        <div>
+                            <h2 id="char-name-display">角色</h2>
+                            <div id="char-occupation" class="occupation"></div>
+                        </div>
+                        <span id="char-age-badge" class="age-badge">0岁</span>
+                    </div>
+                    <div class="panel-body">
+                        <!-- Vitals -->
+                        <div class="vitals-section">
+                            <div class="vital-item">
+                                <span class="vital-icon">&#10084;&#65039;</span>
+                                <span class="vital-label">健康</span>
+                                <div class="vital-bar"><div id="bar-health" class="vital-fill health-fill"></div></div>
+                                <span id="val-health" class="vital-val">80</span>
+                            </div>
+                            <div class="vital-item">
+                                <span class="vital-icon">&#128578;&#65039;</span>
+                                <span class="vital-label">幸福</span>
+                                <div class="vital-bar"><div id="bar-happiness" class="vital-fill happiness-fill"></div></div>
+                                <span id="val-happiness" class="vital-val">70</span>
+                            </div>
+                            <div class="vital-item">
+                                <span class="vital-icon">&#9889;</span>
+                                <span class="vital-label">精力</span>
+                                <div class="vital-bar"><div id="bar-energy" class="vital-fill energy-fill"></div></div>
+                                <span id="val-energy" class="vital-val">100</span>
+                            </div>
+                        </div>
+
+                        <!-- Abilities Grid -->
+                        <div class="section">
+                            <h3>能力面板</h3>
+                            <div id="ability-categories"></div>
+                        </div>
+
+                        <!-- Skills & Relations -->
+                        <div id="skills-section" class="section" style="display:none">
+                            <h3>技能</h3>
+                            <div id="skills-list" class="tag-list"></div>
+                        </div>
+                        <div id="relations-section" class="section" style="display:none">
+                            <h3>关系</h3>
+                            <div id="relations-list" class="tag-list"></div>
+                        </div>
+
+                        <!-- Controls -->
+                        <div class="action-buttons">
+                            <button class="btn-secondary" onclick="saveGame()">&#128190; 存档</button>
+                            <button class="btn-secondary" onclick="toggleTimeline()">&#128218; 记忆</button>
+                            <button class="btn-danger" onclick="resetGame()">&#128260; 重开</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Center: Narrative + Actions -->
+                <div class="panel panel-center">
+                    <div id="narrative-area" class="narrative-area"></div>
+                    <!-- Action Cards -->
+                    <div id="actions-area" class="actions-area">
+                        <div class="actions-header">
+                            <h3>选择行动</h3>
+                            <span id="turn-counter" class="turn-counter">第 0 回合</span>
+                        </div>
+                        <div id="action-cards" class="action-cards"></div>
+                    </div>
+                </div>
+
+                <!-- Right: Timeline (toggleable) -->
+                <div class="panel panel-right" id="timeline-panel" style="display:none">
+                    <div class="panel-header">
+                        <h2>记忆时间线</h2>
+                        <button class="btn-close" onclick="toggleTimeline()">&times;</button>
+                    </div>
+                    <div class="panel-body">
+                        <div id="timeline-list" class="timeline-list"></div>
+                        <div id="experiences-section" class="section" style="display:none">
+                            <h3>人生教训</h3>
+                            <div id="experiences-list" class="experience-list"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="gameover-screen" class="screen">
+            <div class="gameover-container">
+                <h1>&#127775; 人生落幕</h1>
+                <div id="gameover-text" class="gameover-text"></div>
+                <div id="gameover-abilities" class="gameover-abilities"></div>
+                <button class="btn-primary" onclick="resetGame()">开始新人生</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
