@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Learning Assistant - Adaptive Learning Platform</title>
+<meta name="description" content="Based on PowerContext + DeepSeek, an adaptive learning assistant that generates personalized learning plans, provides Socratic tutoring, tracks progress, and adjusts teaching strategies.">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0b10;--bg2:#12131a;--bg3:#1a1c28;--bg4:#242736;
+  --fg:#e8eaf0;--fg2:#a0a4b8;--fg3:#6b7088;
+  --accent:#6c8cff;--accent2:#4a6adf;--accent-glow:rgba(108,140,255,.12);
+  --green:#4ade80;--yellow:#fbbf24;--red:#f87171;--purple:#a78bfa;
+  --border:#242736;--radius:16px;--radius-sm:10px;
+}
+html{scroll-behavior:smooth}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans SC',sans-serif;background:var(--bg);color:var(--fg);line-height:1.7;overflow-x:hidden}
+
+/* Navigation */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,11,16,.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 24px}
+nav .inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:60px}
+nav .logo{font-size:18px;font-weight:700;display:flex;align-items:center;gap:8px;color:var(--fg)}
+nav .logo span{font-size:22px}
+nav .links{display:flex;gap:24px;list-style:none}
+nav .links a{color:var(--fg2);text-decoration:none;font-size:14px;font-weight:500;transition:color .2s}
+nav .links a:hover{color:var(--accent)}
+
+/* Hero */
+.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:120px 24px 80px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 60% 40%,var(--accent-glow) 0%,transparent 60%);pointer-events:none}
+.hero h1{font-size:clamp(36px,6vw,64px);font-weight:800;line-height:1.15;margin-bottom:16px;background:linear-gradient(135deg,var(--fg) 0%,var(--accent) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero .subtitle{font-size:clamp(16px,2.5vw,20px);color:var(--fg2);max-width:640px;margin:0 auto 32px;line-height:1.6}
+.hero .badges{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:40px}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600}
+.badge-blue{background:var(--accent-glow);color:var(--accent);border:1px solid rgba(108,140,255,.2)}
+.badge-green{background:rgba(74,222,128,.1);color:var(--green);border:1px solid rgba(74,222,128,.2)}
+.badge-purple{background:rgba(167,139,250,.1);color:var(--purple);border:1px solid rgba(167,139,250,.2)}
+.hero .cta{display:inline-flex;align-items:center;gap:8px;padding:14px 32px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);font-size:16px;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s}
+.hero .cta:hover{background:var(--accent2);transform:translateY(-2px);box-shadow:0 8px 24px rgba(108,140,255,.3)}
+
+/* Sections */
+section{padding:80px 24px}
+.section-inner{max-width:1200px;margin:0 auto}
+.section-title{font-size:clamp(24px,4vw,36px);font-weight:700;text-align:center;margin-bottom:12px}
+.section-desc{text-align:center;color:var(--fg2);font-size:16px;max-width:600px;margin:0 auto 48px}
+
+/* Features Grid */
+.features{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px}
+.feature-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:28px;transition:all .3s}
+.feature-card:hover{border-color:var(--accent);transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,.3)}
+.feature-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:16px}
+.feature-icon.blue{background:var(--accent-glow)}
+.feature-icon.green{background:rgba(74,222,128,.1)}
+.feature-icon.yellow{background:rgba(251,191,36,.1)}
+.feature-icon.purple{background:rgba(167,139,250,.1)}
+.feature-card h3{font-size:18px;font-weight:600;margin-bottom:8px}
+.feature-card p{color:var(--fg2);font-size:14px;line-height:1.7}
+
+/* Architecture */
+.arch-section{background:var(--bg2)}
+.arch-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center}
+.arch-diagram{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:32px;font-family:'Fira Code',Consolas,monospace;font-size:13px;line-height:2;color:var(--fg2)}
+.arch-diagram .highlight{color:var(--accent);font-weight:600}
+.arch-diagram .green{color:var(--green)}
+.arch-diagram .yellow{color:var(--yellow)}
+.arch-diagram .purple{color:var(--purple)}
+.arch-text h3{font-size:22px;font-weight:700;margin-bottom:16px}
+.arch-text p{color:var(--fg2);font-size:15px;margin-bottom:12px;line-height:1.8}
+.arch-text ul{list-style:none;padding:0}
+.arch-text li{padding:8px 0;color:var(--fg2);font-size:14px;display:flex;align-items:center;gap:8px}
+.arch-text li::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0}
+
+/* Tech Stack */
+.tech-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px}
+.tech-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:24px;text-align:center;transition:all .3s}
+.tech-card:hover{border-color:var(--accent)}
+.tech-card .icon{font-size:36px;margin-bottom:12px}
+.tech-card h4{font-size:16px;font-weight:600;margin-bottom:6px}
+.tech-card p{color:var(--fg3);font-size:13px}
+
+/* Screenshots */
+.screens-section{background:var(--bg2)}
+.screens-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:24px}
+.screen-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:all .3s}
+.screen-card:hover{border-color:var(--accent);transform:translateY(-4px)}
+.screen-preview{height:220px;background:var(--bg4);display:flex;align-items:center;justify-content:center;color:var(--fg3);font-size:14px;padding:20px}
+.screen-preview .mock{width:100%;height:100%;border-radius:8px;background:linear-gradient(135deg,var(--bg) 0%,var(--bg3) 100%);display:flex;flex-direction:column;padding:16px;gap:8px}
+.mock-header{height:12px;background:var(--border);border-radius:4px;width:60%}
+.mock-line{height:8px;background:var(--bg4);border-radius:3px}
+.mock-line.short{width:40%}
+.mock-line.mid{width:70%}
+.mock-line.accent{background:var(--accent-glow);border:1px solid rgba(108,140,255,.2)}
+.mock-chat{display:flex;gap:8px;margin-top:auto}
+.mock-bubble{padding:6px 10px;border-radius:8px;font-size:10px;color:var(--fg2)}
+.mock-bubble.user{background:var(--accent);color:#fff;margin-left:auto}
+.mock-bubble.tutor{background:var(--bg4)}
+.screen-info{padding:16px 20px}
+.screen-info h4{font-size:15px;font-weight:600;margin-bottom:4px}
+.screen-info p{color:var(--fg3);font-size:13px}
+
+/* Quick Start */
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px}
+.step{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:24px;position:relative}
+.step-num{position:absolute;top:-12px;left:20px;background:var(--accent);color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+.step h4{font-size:15px;font-weight:600;margin:8px 0 6px}
+.step code{display:block;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-size:12px;color:var(--green);font-family:'Fira Code',Consolas,monospace;overflow-x:auto;white-space:pre}
+
+/* Footer */
+footer{padding:40px 24px;border-top:1px solid var(--border);text-align:center}
+footer p{color:var(--fg3);font-size:13px}
+footer a{color:var(--accent);text-decoration:none}
+footer a:hover{text-decoration:underline}
+
+/* Responsive */
+@media(max-width:768px){
+  .arch-grid{grid-template-columns:1fr}
+  .arch-diagram{font-size:11px;padding:20px}
+  nav .links{display:none}
+  .screens-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <div class="logo"><span>&#x1F393;</span> Learning Assistant</div>
+    <ul class="links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#architecture">Architecture</a></li>
+      <li><a href="#tech">Tech Stack</a></li>
+      <li><a href="#screens">Screenshots</a></li>
+      <li><a href="#start">Quick Start</a></li>
+    </ul>
+  </div>
+</nav>
+
+<section class="hero">
+  <div>
+    <div class="badges">
+      <span class="badge badge-blue">PowerContext</span>
+      <span class="badge badge-green">DeepSeek LLM</span>
+      <span class="badge badge-purple">2026 Competition</span>
+    </div>
+    <h1>Adaptive Learning Assistant</h1>
+    <p class="subtitle">An AI-powered learning platform that generates personalized study plans, provides Socratic tutoring, tracks mastery progress, and dynamically adjusts teaching strategies &mdash; built on PowerContext for persistent memory and context management.</p>
+    <a href="#start" class="cta">Get Started &rarr;</a>
+  </div>
+</section>
+
+<section id="features">
+  <div class="section-inner">
+    <h2 class="section-title">Core Features</h2>
+    <p class="section-desc">Four integrated modules work together to deliver a personalized learning experience that adapts to each student's needs.</p>
+    <div class="features">
+      <div class="feature-card">
+        <div class="feature-icon blue">&#x1F4CB;</div>
+        <h3>Learning Plan Generation</h3>
+        <p>Automatically generates structured weekly learning plans based on course goals, student background, and topic complexity. Plans include milestones, objectives, and estimated hours &mdash; stored in PowerContext atomic memory for persistent access.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon green">&#x1F4AC;</div>
+        <h3>Socratic Tutoring</h3>
+        <p>AI tutor uses the Socratic method &mdash; asking guiding questions instead of giving direct answers. Conversations are tracked per session with context continuity, so the tutor remembers previous discussions and builds on them.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon yellow">&#x1F4C8;</div>
+        <h3>Progress Tracking</h3>
+        <p>Monitors mastery levels across topics, identifies weak and strong areas, and generates detailed progress reports. Uses PowerContext memory kinds (mastery, weakness, plan) to maintain a persistent student model.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon purple">&#x1F3AF;</div>
+        <h3>Adaptive Strategy</h3>
+        <p>Dynamically adjusts teaching difficulty, style, and focus areas based on performance data. Implements spaced repetition scheduling and automatically flags topics that need review &mdash; all state persisted through PowerContext.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="architecture" class="arch-section">
+  <div class="section-inner">
+    <h2 class="section-title">System Architecture</h2>
+    <p class="section-desc">Built on PowerContext for context management and DeepSeek for LLM inference.</p>
+    <div class="arch-grid">
+      <div class="arch-diagram">
+<span class="highlight">Scope Hierarchy:</span>
+  Student
+    <span class="green">&#x2514;&#x2500;</span> Course
+         <span class="yellow">&#x2514;&#x2500;</span> Session
+
+<span class="highlight">PowerContext Memory Kinds:</span>
+  <span class="green">&#x25CF;</span> student_profile
+  <span class="green">&#x25CF;</span> plan
+  <span class="green">&#x25CF;</span> mastery / weakness
+  <span class="yellow">&#x25CF;</span> session_state
+  <span class="purple">&#x25CF;</span> adaptive_state
+  <span class="purple">&#x25CF;</span> review_schedule
+
+<span class="highlight">Data Flow:</span>
+  User Input <span class="green">&rarr;</span> Session Service
+    <span class="green">&rarr;</span> TutorLLM (DeepSeek)
+    <span class="green">&rarr;</span> PowerContext Memory
+    <span class="green">&rarr;</span> Adaptive Strategy
+      </div>
+      <div class="arch-text">
+        <h3>How PowerContext Powers Learning</h3>
+        <p>Every student, course, and session is a <strong>Scope</strong> in PowerContext. Atomic Memory stores structured knowledge that persists across sessions and can be searched with full-text retrieval.</p>
+        <ul>
+          <li>Scope hierarchy: Student &rarr; Course &rarr; Session</li>
+          <li>Atomic Memory with 7 knowledge kinds</li>
+          <li>Full-text search for instant recall</li>
+          <li>Session state persistence for conversation continuity</li>
+          <li>Experience artifacts for exercise tracking</li>
+          <li>SQLite storage (Windows) / seekdb (Linux/macOS)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="tech">
+  <div class="section-inner">
+    <h2 class="section-title">Tech Stack</h2>
+    <p class="section-desc">Modern Python stack with proven AI infrastructure.</p>
+    <div class="tech-grid">
+      <div class="tech-card">
+        <div class="icon">&#x1F40D;</div>
+        <h4>Python 3.11+</h4>
+        <p>Async/await throughout</p>
+      </div>
+      <div class="tech-card">
+        <div class="icon">&#x1F9E0;</div>
+        <h4>PowerContext SDK</h4>
+        <p>Context & memory engine</p>
+      </div>
+      <div class="tech-card">
+        <div class="icon">&#x1F4AC;</div>
+        <h4>DeepSeek API</h4>
+        <p>OpenAI-compatible LLM</p>
+      </div>
+      <div class="tech-card">
+        <div class="icon">&#x1F5C4;</div>
+        <h4>SQLite / seekdb</h4>
+        <p>Persistent storage</p>
+      </div>
+      <div class="tech-card">
+        <div class="icon">&#x26A1;</div>
+        <h4>FastAPI</h4>
+        <p>Web server & API</p>
+      </div>
+      <div class="tech-card">
+        <div class="icon">&#x1F3A8;</div>
+        <h4>HTML/CSS/JS</h4>
+        <p>Dark-themed chat UI</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="screens" class="screens-section">
+  <div class="section-inner">
+    <h2 class="section-title">Interface Preview</h2>
+    <p class="section-desc">A modern dark-themed web client with wizard setup, chat interface, and real-time sidebar panels.</p>
+    <div class="screens-grid">
+      <div class="screen-card">
+        <div class="screen-preview">
+          <div class="mock">
+            <div class="mock-header"></div>
+            <div style="display:flex;gap:8px;margin-top:12px">
+              <div style="flex:1;background:var(--bg3);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:6px">
+                <div class="mock-line accent" style="height:10px;border-radius:4px"></div>
+                <div class="mock-line mid"></div>
+                <div class="mock-line"></div>
+                <div class="mock-line short"></div>
+              </div>
+            </div>
+            <div style="display:flex;gap:6px;margin-top:auto">
+              <div style="flex:1;height:8px;background:var(--border);border-radius:4px"></div>
+              <div style="width:32px;height:32px;background:var(--accent);border-radius:8px"></div>
+            </div>
+          </div>
+        </div>
+        <div class="screen-info">
+          <h4>Setup Wizard</h4>
+          <p>3-step onboarding: student profile, course configuration, and learning goal</p>
+        </div>
+      </div>
+      <div class="screen-card">
+        <div class="screen-preview">
+          <div class="mock">
+            <div style="display:flex;gap:8px;flex:1;overflow:hidden">
+              <div style="width:100px;background:var(--bg);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:4px">
+                <div class="mock-line short" style="height:6px"></div>
+                <div class="mock-line" style="height:6px"></div>
+                <div class="mock-line mid" style="height:6px"></div>
+                <div style="margin-top:auto">
+                  <div class="mock-line short" style="height:6px"></div>
+                  <div class="mock-line" style="height:6px"></div>
+                </div>
+              </div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:6px;padding:8px">
+                <div class="mock-bubble tutor" style="align-self:flex-start;max-width:70%">Hello! What would you like to learn?</div>
+                <div class="mock-bubble user" style="align-self:flex-end;max-width:60%">Tell me about Python variables</div>
+                <div class="mock-bubble tutor" style="align-self:flex-start;max-width:80%">Great question! Imagine a box...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="screen-info">
+          <h4>Chat Interface</h4>
+          <p>Socratic tutoring with real-time AI responses and context-aware sidebar</p>
+        </div>
+      </div>
+      <div class="screen-card">
+        <div class="screen-preview">
+          <div class="mock">
+            <div style="display:flex;gap:8px;flex:1">
+              <div style="flex:1;display:flex;flex-direction:column;gap:6px;padding:8px">
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <div class="mock-line short" style="height:8px;width:80px"></div>
+                  <div style="padding:2px 8px;background:rgba(74,222,128,.15);border-radius:8px;font-size:9px;color:var(--green)">beginner</div>
+                </div>
+                <div class="mock-line"></div>
+                <div class="mock-line mid"></div>
+                <div style="height:6px;background:var(--bg4);border-radius:3px;margin-top:4px">
+                  <div style="height:100%;width:35%;background:linear-gradient(90deg,var(--accent),var(--green));border-radius:3px"></div>
+                </div>
+                <div style="display:flex;gap:4px;margin-top:auto">
+                  <div style="flex:1;height:20px;background:var(--bg4);border-radius:4px"></div>
+                  <div style="flex:1;height:20px;background:var(--bg4);border-radius:4px"></div>
+                  <div style="flex:1;height:20px;background:var(--bg4);border-radius:4px"></div>
+                  <div style="flex:1;height:20px;background:var(--bg4);border-radius:4px"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="screen-info">
+          <h4>Dashboard Panels</h4>
+          <p>Learning plan, adaptive strategy, progress bar, and memory store</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="start">
+  <div class="section-inner">
+    <h2 class="section-title">Quick Start</h2>
+    <p class="section-desc">Get up and running in 4 steps.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h4>Clone Repository</h4>
+        <code>git clone https://github.com/shizuguyuki-alt/powercontext.git
+cd powercontext/qoder/learning-assistant</code>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h4>Install Dependencies</h4>
+        <code>pip install -e .</code>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h4>Configure API Key</h4>
+        <code>export OPENAI_API_KEY="sk-your-key"
+export OPENAI_BASE_URL="https://api.deepseek.com"
+export LLM_MODEL="deepseek-chat"</code>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <h4>Launch Web Client</h4>
+        <code>python web/app.py
+# Open http://127.0.0.1:8090</code>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>Learning Assistant &mdash; Built with <a href="https://github.com/oceanbase/powercontext" target="_blank">PowerContext</a> + DeepSeek for 2026 Qoder Competition</p>
+  <p style="margin-top:8px"><a href="https://github.com/shizuguyuki-alt/powercontext" target="_blank">Source Code</a></p>
+</footer>
+
+</body>
+</html>
